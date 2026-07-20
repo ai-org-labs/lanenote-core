@@ -1,0 +1,28 @@
+{
+  "name": "@ai-org-labs/lanenote-core",
+  "version": "0.2.0",
+  "description": "CDN-loadable browser-local LaneNote Core renderer.",
+  "type": "commonjs",
+  "main": "./dist/lanenote-core.js",
+  "browser": "./dist/lanenote-core.js",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ai-org-labs/lanenote-core.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "qif"
+  ],
+  "scripts": {
+    "test": "node test/lanenote-core.test.js",
+    "qif": "node /Users/mn/development/quality-intent-framework-public/tools/validate-qif.mjs qif/lanenote-core-qif.json"
+  }
+}

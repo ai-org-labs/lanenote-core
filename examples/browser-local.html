@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LaneNote Core Browser Local Demo</title>
+    <style>
+      body {
+        margin: 0;
+        background: #edf0ea;
+        color: #172026;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      h1 {
+        margin: 0 0 14px;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      .demo-note {
+        margin: 0 0 16px;
+        color: #4e5e52;
+      }
+
+      details {
+        margin-top: 16px;
+        border: 1px solid #d9ded6;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      summary {
+        cursor: pointer;
+        padding: 10px 12px;
+        font-weight: 650;
+      }
+
+      .syntax {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0;
+        border-top: 1px solid #d9ded6;
+      }
+
+      .syntax section {
+        padding: 12px;
+        border-right: 1px solid #d9ded6;
+      }
+
+      .syntax section:last-child {
+        border-right: 0;
+      }
+
+      .syntax h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      .syntax ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #4e5e52;
+      }
+
+      .syntax pre {
+        overflow: auto;
+        margin: 0;
+        padding: 10px;
+        border-radius: 6px;
+        background: #f7f8f5;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .note-boundary {
+        margin: 0;
+        padding: 10px 12px;
+        border-top: 1px solid #d9ded6;
+        color: #4e5e52;
+      }
+
+      @media (max-width: 760px) {
+        .syntax {
+          grid-template-columns: 1fr;
+        }
+
+        .syntax section {
+          border-right: 0;
+          border-bottom: 1px solid #d9ded6;
+        }
+
+        .syntax section:last-child {
+          border-bottom: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>LaneNote Core</h1>
+      <p class="demo-note">一枚の雑メモをそのまま書き、あとから日付・担当・期限の漏れだけをブラウザローカルで見ます。</p>
+      <div id="lanenote"></div>
+      <details open>
+        <summary>Syntax</summary>
+        <p class="note-boundary">上の textarea が LaneNote DSL の全量です。ビュー、担当別名、グループ、初期フィルタ、日々のメモを同じテキストとして保存します。</p>
+        <div class="syntax">
+          <section>
+            <h2>Full Textarea DSL</h2>
+            <pre>---
+lanenote:
+  profile.defaultLens: timeline
+  lenses.timeline.rows: scheduledAt
+  lenses.timeline.columns: assignee
+  roles.評価.aliases: QA
+  roles.評価.group: 品質系
+---
+
+8/5
+開発
+- [ ] Product A 認証API実装 !8/8
+- [ ] Product A 移行手順レビュー !8/9
+
+評価
+- [ ] Product A 結合試験 !8/12</pre>
+          </section>
+          <section>
+            <h2>Rules</h2>
+            <ul>
+              <li><code>YYYY-MM-DD</code>, <code>7/20</code>, <code>今日</code>, <code>明日</code> が日付です。</li>
+              <li>日付だけの行は、次の日付までの実施日になります。</li>
+              <li>箇条書きの直前にある単独行は担当レーンになり、未知の担当もその場で認識します。</li>
+              <li><code>!7/21</code> は項目だけの期限です。実施日を上書きしません。</li>
+              <li><code>[ ]</code> は Open、<code>[x]</code> は Done です。</li>
+              <li>チェックなしの箇条書きはメモまたはタスク候補で、Open Taskにはしません。</li>
+              <li><code>明日</code> は行の記入日時で固定され、後日の再表示で動きません。</li>
+              <li>担当は行頭の完全一致だけを見ます。本文中の <code>OpenAI</code> から <code>AI</code> を拾いません。</li>
+              <li>カード下部に、日付・担当をどう判定したかが表示されます。</li>
+              <li>グループ、別名、Lensの縦横は textarea 先頭の <code>lanenote:</code> で定義します。</li>
+              <li><code>実装</code>, <code>結合試験</code> などは本文から補助的に拾います。</li>
+              <li>日付なしは <code>日付なし</code>、担当なしは <code>役割なし</code> に入ります。</li>
+              <li>DSL内のLensをツールバーから切り替えられます。</li>
+              <li>ビューを選ぶと、そのビュー用テンプレートだけを選択できます。</li>
+              <li>テンプレ適用は本文を置き換え、対応するビューにも切り替えます。</li>
+            </ul>
+          </section>
+        </div>
+      </details>
+    </main>
+
+    <script src="../dist/lanenote-core.js"></script>
+    <script>
+      LaneNoteCore.create("#lanenote", {
+        storageKey: "lanenote-core-demo-v0.4"
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,282 @@
+{
+  "qifVersion": "0.4.1-authoring-compatible",
+  "packageId": "QIF-LANENOTE-CDN-001",
+  "missions": [
+    {
+      "id": "MIS-LANENOTE-CDN",
+      "statement": "Develop LaneNote Core as a CDN-loadable browser-local plugin that renders the source note into a timeline-by-assignee Lens without server dependency.",
+      "stakeholderRefs": ["STK-PM", "STK-INTEGRATOR"],
+      "contextRefs": ["CTX-BROWSER-PLUGIN", "CTX-AOF-RUNTIME"]
+    }
+  ],
+  "stakeholders": [
+    {
+      "id": "STK-PM",
+      "name": "PM note author",
+      "role": "Primary user who writes informal notes and needs assignment/date visibility without cleanup work."
+    },
+    {
+      "id": "STK-INTEGRATOR",
+      "name": "Noblit or host-page integrator",
+      "role": "Consumer that embeds the LaneNote Core runtime via a script tag or equivalent CDN path."
+    }
+  ],
+  "contexts": [
+    {
+      "id": "CTX-BROWSER-PLUGIN",
+      "title": "Browser-local CDN plugin",
+      "description": "The runtime is loaded as a plain browser script, exposes window.LaneNoteCore, and operates without npm installation or a backend service."
+    },
+    {
+      "id": "CTX-AOF-RUNTIME",
+      "title": "AOF-governed implementation flow",
+      "description": "Development evidence must include at least one relevant AOF runtime command and QIF validation evidence."
+    }
+  ],
+  "risks": [
+    {
+      "id": "RSK-CDN-BREAKS",
+      "statement": "The plugin cannot be consumed from a CDN-style script tag or does not expose a stable global API.",
+      "lossBoundary": "Host pages must not require a build step or server dependency to mount the MVP renderer.",
+      "stakeholderRefs": ["STK-INTEGRATOR"],
+      "contextRefs": ["CTX-BROWSER-PLUGIN"]
+    },
+    {
+      "id": "RSK-SOURCE-DRIFT",
+      "statement": "Lens interactions, substring inference, noisy rendering, or repeated rendering mutate source meaning, hide the user's intended view, or lose the distinction between scheduled and due dates.",
+      "lossBoundary": "Checkbox updates must round-trip through the source line; title text must not be damaged by assignee detection; scheduled and due dates must coexist; relative dates must not drift after the line receives its writing timestamp; routine provenance must not crowd the card surface when it does not change user action.",
+      "stakeholderRefs": ["STK-PM", "STK-INTEGRATOR"],
+      "contextRefs": ["CTX-BROWSER-PLUGIN"]
+    },
+    {
+      "id": "RSK-QUALITY-CLAIM",
+      "statement": "Activity such as writing code, running tests, or passing a validator is overstated as semantic product quality.",
+      "lossBoundary": "The project must not claim release-ready semantic quality from structural/runtime checks alone.",
+      "stakeholderRefs": ["STK-PM", "STK-INTEGRATOR"],
+      "contextRefs": ["CTX-AOF-RUNTIME"]
+    }
+  ],
+  "knowledgeSources": [
+    {
+      "id": "SRC-REQ-DOC",
+      "title": "lanenote_requirements_v0.1.docx",
+      "type": "requirements-draft",
+      "reliability": 0.7
+    },
+    {
+      "id": "SRC-AOF-GUIDE",
+      "title": "AOF AI_AUTHORING_GUIDE.md v8.2.0 local copy",
+      "type": "authoring-guide",
+      "reliability": 0.8
+    },
+    {
+      "id": "SRC-QIF-GUIDE",
+      "title": "QIF AI_AUTHORING_GUIDE.md v0.4.1 local copy",
+      "type": "authoring-guide",
+      "reliability": 0.8
+    },
+    {
+      "id": "SRC-RUNTIME-TEST",
+      "title": "test/lanenote-core.test.js",
+      "type": "runtime-test",
+      "reliability": 0.8
+    },
+    {
+      "id": "SRC-AOF-INIT",
+      "title": "AOF init command output",
+      "type": "runtime-command",
+      "reliability": 0.75
+    }
+  ],
+  "qualityIntents": [
+    {
+      "id": "QIN-CDN-API",
+      "statement": "LaneNote Core must be embeddable as a CDN-style browser plugin with a stable global API for parsing, mounting, rendering, source access, and teardown.",
+      "purpose": "Protect host-page integration from build-tool and server coupling.",
+      "governanceOwner": "builder",
+      "stakeholderRefs": ["STK-INTEGRATOR"],
+      "contextRefs": ["CTX-BROWSER-PLUGIN"],
+      "riskRefs": ["RSK-CDN-BREAKS"],
+      "sourceRefs": ["SRC-REQ-DOC", "SRC-RUNTIME-TEST"],
+      "status": "active",
+      "acceptanceCriteria": [
+        "dist/lanenote-core.js exposes LaneNoteCore.version, create, parse, renderMatrix, getDefaultProfile, getDefaultTemplates, exportProjectedMarkdown, exportPortableJSON, and replaceCheckboxAtLine.",
+        "examples/browser-local.html consumes the runtime through a script tag and exposes project-management templates linked to each built-in Lens."
+      ]
+    },
+    {
+      "id": "QIN-SOURCE-TRUTH",
+      "statement": "The browser-local Lens must preserve the source note as truth and sync checkbox state by editing the corresponding Markdown checkbox line.",
+      "purpose": "Protect user trust and prevent hidden derived-state divergence.",
+      "governanceOwner": "builder",
+      "stakeholderRefs": ["STK-PM", "STK-INTEGRATOR"],
+      "contextRefs": ["CTX-BROWSER-PLUGIN"],
+      "riskRefs": ["RSK-SOURCE-DRIFT"],
+      "sourceRefs": ["SRC-REQ-DOC", "SRC-RUNTIME-TEST"],
+      "status": "active",
+      "acceptanceCriteria": [
+        "Rule parser preserves separate scheduledAt, dueAt, eventAt, and recordedAt values while retaining a compatibility projection date.",
+        "Unknown structural assignee headings become lanes, aliases resolve through the textarea DSL or host fallback profile, and arbitrary title substrings do not become assignees.",
+        "Only checkbox items receive Open or Done task state; non-checkbox items remain notes or action/event candidates.",
+        "Browser block metadata gives each line a stable ID and writing timestamp used to freeze relative-date interpretation.",
+        "Lens axis orientation, grouping, and folding alter only the derived view without mutating the source note.",
+        "Built-in and host-defined templates are filtered by active Lens; applying one explicitly replaces source text and switches to its declared Lens.",
+        "The textarea source contains the complete LaneNote DSL for Lens, role, group, alias, filter, and note-body definitions; host profile data is only a fallback.",
+        "Front matter lens and filters set initial view state without mutating source text and renderMatrix respects them when explicit runtime options are not provided.",
+        "Card chips are reserved for actionable or disambiguating information rather than every derived field.",
+        "Projected Markdown export follows current filters, axis orientation, grouping/folding visibility, and source-line evidence without rewriting the source note.",
+        "replaceCheckboxAtLine updates both leading and inline Markdown checkbox markers."
+      ]
+    },
+    {
+      "id": "QIN-GOVERNED-EVIDENCE",
+      "statement": "Implementation claims must remain tied to AOF runtime evidence and QIF loss boundaries rather than activity counts.",
+      "purpose": "Protect review quality by separating structural/runtime evidence from semantic product approval.",
+      "governanceOwner": "guardian",
+      "stakeholderRefs": ["STK-PM", "STK-INTEGRATOR"],
+      "contextRefs": ["CTX-AOF-RUNTIME"],
+      "riskRefs": ["RSK-QUALITY-CLAIM"],
+      "sourceRefs": ["SRC-AOF-GUIDE", "SRC-QIF-GUIDE", "SRC-AOF-INIT"],
+      "status": "active",
+      "acceptanceCriteria": [
+        "At least one AOF runtime command is executed and retained as evidence.",
+        "QIF package passes the local QIF validator while explicitly limiting verifier claims."
+      ]
+    }
+  ],
+  "evidenceItems": [
+    {
+      "id": "EVD-CDN-API-TEST",
+      "sourceRef": "SRC-RUNTIME-TEST",
+      "intentRefs": ["QIN-CDN-API", "QIN-SOURCE-TRUTH"],
+      "finding": "Node VM execution of dist/lanenote-core.js verifies the v0.2 global API, default profile fallback exposure, full textarea DSL for Lens/role/group/filter definitions, compact context syntax, separate scheduled and due dates, structural unknown-role discovery, exact-prefix alias recognition, OpenAI substring preservation, Task versus candidate state, per-line relative-date bases, invalid-date rejection, source-local multi-axis Lens profiles, reduced routine provenance chips, view-linked templates, group rendering, human Markdown export, portable JSON, and checkbox source-line replacement.",
+      "polarity": "supports",
+      "confidence": 0.84,
+      "confidenceInputs": {
+        "sourceReliability": 0.8,
+        "relevance": 0.95,
+        "coverage": 0.75,
+        "recency": 1,
+        "independence": 0.7,
+        "contradictionPenalty": 0
+      }
+    },
+    {
+      "id": "EVD-AOF-INIT",
+      "sourceRef": "SRC-AOF-INIT",
+      "intentRefs": ["QIN-GOVERNED-EVIDENCE"],
+      "finding": "AOF runtime command initialized LaneNote as a managed-project with runtime-on mode and produced .aof bootstrap, orientation, organization, registry, policy, resource, capability, and goal artifacts.",
+      "polarity": "supports",
+      "confidence": 0.8,
+      "confidenceInputs": {
+        "sourceReliability": 0.75,
+        "relevance": 0.9,
+        "coverage": 0.65,
+        "recency": 1,
+        "independence": 0.7,
+        "contradictionPenalty": 0
+      }
+    },
+    {
+      "id": "EVD-REQ-MAPPING",
+      "sourceRef": "SRC-REQ-DOC",
+      "intentRefs": ["QIN-CDN-API", "QIN-SOURCE-TRUTH"],
+      "finding": "The requirements draft identifies source-note truth, timeline-by-assignee Lens, local-first operation, and checkbox bidirectional sync as MVP boundaries.",
+      "polarity": "supports",
+      "confidence": 0.77,
+      "confidenceInputs": {
+        "sourceReliability": 0.7,
+        "relevance": 0.9,
+        "coverage": 0.7,
+        "recency": 1,
+        "independence": 0.55,
+        "contradictionPenalty": 0
+      }
+    }
+  ],
+  "indicators": [
+    {
+      "id": "IND-TEST-COUNT",
+      "metricKind": "activity-count",
+      "value": 1,
+      "unit": "test file",
+      "interpretation": "evidence-only",
+      "linkedIntentRef": "QIN-GOVERNED-EVIDENCE",
+      "linkedRiskRef": "RSK-QUALITY-CLAIM"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "EVL-LANENOTE-MVP",
+      "evaluatedIntentRefs": ["QIN-CDN-API", "QIN-SOURCE-TRUTH", "QIN-GOVERNED-EVIDENCE"],
+      "evidenceRefs": ["EVD-CDN-API-TEST", "EVD-AOF-INIT", "EVD-REQ-MAPPING"],
+      "confidencePolicy": {
+        "partialThreshold": 0.65,
+        "achievedThreshold": 0.8
+      },
+      "verdicts": [
+        {
+          "intentRef": "QIN-CDN-API",
+          "decision": "achieved",
+          "confidence": 0.81,
+          "evidenceRefs": ["EVD-CDN-API-TEST", "EVD-REQ-MAPPING"]
+        },
+        {
+          "intentRef": "QIN-SOURCE-TRUTH",
+          "decision": "achieved",
+          "confidence": 0.81,
+          "evidenceRefs": ["EVD-CDN-API-TEST", "EVD-REQ-MAPPING"]
+        },
+        {
+          "intentRef": "QIN-GOVERNED-EVIDENCE",
+          "decision": "achieved",
+          "confidence": 0.8,
+          "evidenceRefs": ["EVD-AOF-INIT"]
+        }
+      ]
+    }
+  ],
+  "governanceEvents": [
+    {
+      "id": "GOV-SEMANTIC-REVIEW",
+      "targetRef": "QIN-CDN-API",
+      "eventType": "review-required",
+      "statement": "Human/operator review is still required before claiming Noblit integration readiness or public release readiness.",
+      "evidenceRefs": ["EVD-CDN-API-TEST"]
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "GAT-LANENOTE-STRUCTURAL-MVP",
+      "requiredArtifactRefs": [
+        "dist/lanenote-core.js",
+        "examples/browser-local.html",
+        "docs/SYNTAX.md",
+        "test/lanenote-core.test.js",
+        ".aof/project-bootstrap.json"
+      ],
+      "criteria": [
+        {
+          "statement": "CDN-style runtime artifact exists.",
+          "status": "pass"
+        },
+        {
+          "statement": "Browser-local demo exists and loads the runtime through a script tag.",
+          "status": "pass"
+        },
+        {
+          "statement": "Implemented syntax is documented as an auditable artifact.",
+          "status": "pass"
+        },
+        {
+          "statement": "Runtime test exists for parser, API exposure, and checkbox source-line sync.",
+          "status": "pass"
+        },
+        {
+          "statement": "AOF runtime bootstrap exists for governed execution evidence.",
+          "status": "pass"
+        }
+      ]
+    }
+  ]
+}
