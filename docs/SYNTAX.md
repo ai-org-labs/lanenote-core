@@ -96,6 +96,29 @@ Combined context is accepted:
 
 The expanded form is recommended when several items share the same context.
 
+For faster capture, a role lane may be written with a leading colon. Bare lines under an active date or role are kept as dated items or candidates.
+
+```md
+7/20
+:アプリ
+あれやる
+これやる
+それやる
+
+7/21
+:データ
+あちら
+こちら
+
+7/21 [ ]そちら !7/25
+```
+
+Derived meaning:
+
+- `あれやる`, `これやる`, `それやる`: `scheduledAt=7/20`, `assignee=アプリ`, action candidates.
+- `あちら`, `こちら`: `scheduledAt=7/21`, `assignee=データ`.
+- `そちら`: checkbox task, `scheduledAt=7/21`, inherited `assignee=データ`, `dueAt=7/25`.
+
 ## Assignee Recognition
 
 Deterministic recognition uses structure and exact leading tokens. LaneNote does not search arbitrary substrings in the title.

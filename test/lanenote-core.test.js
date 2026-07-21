@@ -114,6 +114,37 @@ assert.equal(combined.items[0].scheduledAt, "2026-07-20");
 assert.equal(combined.items[0].dueAt, "2026-07-21");
 assert.equal(combined.items[0].assignee, "開発");
 
+const lazyLaneSource = [
+  "7/20",
+  ":アプリ",
+  "あれやる",
+  "これやる",
+  "それやる",
+  "",
+  "7/21",
+  ":データ",
+  "あちら",
+  "こちら",
+  "",
+  "7/21 [ ]そちら !7/25"
+].join("\n");
+const lazyLane = normalize(LaneNoteCore.parse(lazyLaneSource, {
+  baseDate: "2026-07-20"
+}));
+assert.equal(lazyLane.items.length, 6);
+assert.equal(lazyLane.items[0].title, "あれやる");
+assert.equal(lazyLane.items[0].scheduledAt, "2026-07-20");
+assert.equal(lazyLane.items[0].assignee, "アプリ");
+assert.equal(lazyLane.items[0].kind, "action-candidate");
+assert.ok(lazyLane.items.some((item) => item.title === "あちら" && item.assignee === "データ" && item.scheduledAt === "2026-07-21"));
+const lazyDueTask = lazyLane.items.find((item) => item.title === "そちら");
+assert.ok(lazyDueTask);
+assert.equal(lazyDueTask.task, true);
+assert.equal(lazyDueTask.status, "Open");
+assert.equal(lazyDueTask.assignee, "データ");
+assert.equal(lazyDueTask.scheduledAt, "2026-07-21");
+assert.equal(lazyDueTask.dueAt, "2026-07-25");
+
 const dueOnly = normalize(LaneNoteCore.parse("- [ ] API修正 !7/21", {
   baseDate: "2026-07-19"
 }));

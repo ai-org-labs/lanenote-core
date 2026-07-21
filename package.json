@@ -1,6 +1,6 @@
 {
   "name": "@ai-org-labs/lanenote-core",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "description": "CDN-loadable browser-local LaneNote Core renderer.",
   "type": "commonjs",
   "main": "./dist/lanenote-core.js",

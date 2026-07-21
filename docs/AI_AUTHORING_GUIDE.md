@@ -153,6 +153,25 @@ Derived meaning:
 - `APIテスト`: action candidate, not an Open task because it has no checkbox.
 - `散髪`: event candidate with a relative scheduled date and assignee `私`.
 
+Fast-capture lane syntax is also valid:
+
+```md
+7/20
+:アプリ
+あれやる
+これやる
+それやる
+
+7/21
+:データ
+あちら
+こちら
+
+7/21 [ ]そちら !7/25
+```
+
+AI agents should preserve this style when the user is writing rough notes. `:アプリ` and `:データ` are explicit assignee lanes. Bare lines under an active date or lane become dated items or candidates. The final line is an Open task with `scheduledAt=7/21`, inherited `assignee=データ`, and `dueAt=7/25`.
+
 ## Date Rules
 
 Recognized human dates:
@@ -185,6 +204,7 @@ Relative dates:
 
 Assignee detection is deterministic:
 
+- A `:名前` line is an explicit assignee lane.
 - A standalone heading before list items is learned as a role.
 - A role or alias at the exact start of an item line is recognized.
 - `assignee:<name>` and `role:<name>` fields are recognized.

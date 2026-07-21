@@ -139,6 +139,17 @@
     return /^\s*[-*]\s+/.test(line) || /\[( |x|X)\]/.test(line);
   }
 
+  function laneHeadingName(line) {
+    var trimmed = String(line || "").trim();
+    var marker = trimmed.match(/^[:：]\s*(.+?)\s*$/);
+    if (marker) return marker[1].replace(/[：:]$/, "").trim();
+    return trimmed.replace(/[：:]$/, "").trim();
+  }
+
+  function isExplicitLaneHeading(line) {
+    return /^[:：]\s*.+/.test(String(line || "").trim());
+  }
+
   function nextContentLine(lines, start, skip) {
     for (var i = start + 1; i < lines.length; i += 1) {
       if (skip[i] || !lines[i].trim()) continue;
@@ -154,8 +165,8 @@
       if (skip[index]) return;
       var trimmed = line.trim();
       if (!trimmed || trimmed.length > 40 || /^#|^@written\b/.test(trimmed) || hasDate.test(trimmed) || lineLooksLikeItem(trimmed)) return;
-      if (!lineLooksLikeItem(nextContentLine(lines, index, skip))) return;
-      values.push(trimmed.replace(/[：:]$/, "").trim());
+      if (!isExplicitLaneHeading(trimmed) && !lineLooksLikeItem(lines[index + 1] || "")) return;
+      values.push(laneHeadingName(trimmed));
     });
     return uniq(values);
   }
@@ -188,7 +199,7 @@
   }
 
   function exactRole(value, registry) {
-    var normalized = String(value || "").replace(/[：:]$/, "").trim();
+    var normalized = laneHeadingName(value);
     for (var i = 0; i < registry.length; i += 1) {
       if (registry[i].alias === normalized) return registry[i];
     }
@@ -437,7 +448,7 @@
         return;
       }
 
-      var structuralName = trimmed.replace(/[：:]$/, "").trim();
+      var structuralName = laneHeadingName(trimmed);
       if (structuralAssignees.indexOf(structuralName) !== -1 && !lineLooksLikeItem(trimmed)) {
         var structuralRole = exactRole(structuralName, registry);
         activeAssignee = structuralRole ? structuralRole.canonical : structuralName;
@@ -467,8 +478,9 @@
       var resolvedAssignee = assignee || activeAssignee || UNASSIGNED_LANE;
       var strippedTitle = stripSignals(trimmed, leadingDateRaw || fields.date || fields.planned, assigneeRaw);
       var isListItem = /^\s*[-*]\s+/.test(line);
-      var looksActionable = /する|対応|確認|作る|修正|登録|準備|レビュー|試験|テスト|リリース|依頼/.test(strippedTitle);
-      var isItem = Boolean(checkbox) || isListItem || looksActionable || Boolean(strippedTitle && (scheduleRaw || eventRaw || recordedRaw));
+      var looksActionable = /やる|する|対応|確認|作る|修正|登録|準備|レビュー|試験|テスト|リリース|依頼/.test(strippedTitle);
+      var inheritedContext = Boolean(activeScheduledAt || activeAssignee);
+      var isItem = Boolean(checkbox) || isListItem || looksActionable || Boolean(strippedTitle && (scheduleRaw || eventRaw || recordedRaw || inheritedContext));
 
       if (!isItem) {
         if (scheduleRaw && scheduleInfo.date) {
