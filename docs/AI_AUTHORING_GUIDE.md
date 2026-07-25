@@ -37,23 +37,16 @@ Use this as the canonical source pattern:
 ```md
 ---
 lanenote:
-  profile.defaultLens: timeline
-  lenses.timeline.label: 時系列 × 担当
-  lenses.timeline.rows: scheduledAt
-  lenses.timeline.columns: assignee
-  lenses.reverse.label: 担当 × 日付
-  lenses.reverse.rows: assignee
-  lenses.reverse.columns: scheduledAt
-  lenses.productPhase.label: 製品 × 工程
-  lenses.productPhase.rows: product
-  lenses.productPhase.columns: phase
-  roles.PM.group: 推進
-  roles.企画.group: 推進
-  roles.開発.group: 開発系
-  roles.インフラ.group: 開発系
-  roles.評価.aliases: QA
-  roles.評価.group: 品質系
-  roles.私.group: 個人
+  default: timeline
+  view.timeline: 時系列 × 担当 | scheduledAt x assignee
+  view.reverse: 担当 × 日付 | assignee x scheduledAt
+  view.productPhase: 製品 × 工程 | product x phase
+  role.PM: @推進
+  role.企画: @推進
+  role.開発: @開発系
+  role.インフラ: @開発系
+  role.評価: QA @品質系
+  role.私: @個人
   filters.status: All
   filters.assignee: All
   filters.dateRole: All
@@ -83,11 +76,14 @@ Recognized current keys:
 | Key | Meaning | Example |
 | --- | --- | --- |
 | `profile.defaultLens` | Opening Lens ID | `timeline` |
+| `default` | Short opening Lens ID | `timeline` |
 | `defaultLens` | Legacy alias for opening Lens | `productPhase` |
 | `lens` | Legacy alias for opening Lens | `reverse` |
+| `view.<id>` | Short Lens definition | `時系列 × 担当 | scheduledAt x assignee` |
 | `lenses.<id>.label` | Human label in toolbar | `時系列 × 担当` |
 | `lenses.<id>.rows` | Matrix row axis | `scheduledAt` |
 | `lenses.<id>.columns` | Matrix column axis | `assignee` |
+| `role.<name>` | Short role alias/group definition | `QA @品質系` |
 | `roles.<name>.aliases` | Comma-separated aliases | `QA, tester` |
 | `roles.<name>.group` | Role group header | `品質系` |
 | `filters.status` | Opening status filter | `Open` |
@@ -122,6 +118,17 @@ Supported status values:
 - `Done`
 - `Hidden`
 - `Archive`
+
+Prefer the short forms when generating new notes:
+
+```md
+lanenote:
+  default: timeline
+  view.timeline: 時系列 × 担当 | scheduledAt x assignee
+  role.評価: QA @品質系
+```
+
+Use the longer `lenses.*` and `roles.*` forms only when editing an existing note that already uses them.
 
 ## Body Syntax
 
@@ -322,7 +329,8 @@ Card display is intentionally compact:
 - Show candidate state for non-task suggestions.
 - Show relative or rollover provenance when useful.
 - Do not show routine chips such as `planned` or `8/5→2026-08-05`.
-- Keep provenance in the evidence/decision line when it helps debugging.
+- Keep routine provenance out of the normal card surface.
+- Decision details may appear on hover or keyboard focus for debugging.
 
 ## Browser Plugin API
 
@@ -420,6 +428,7 @@ The compatibility `date` field is the projected date used when a Lens asks for `
 When generating LaneNote text:
 
 - Put the complete `lanenote:` DSL at the top when creating a reusable note or template.
+- Prefer `default`, `view.<id>`, and `role.<name>` short forms for readability.
 - Use short date context lines for grouped work.
 - Use standalone role headings when several items share an assignee.
 - Use checkboxes only for tasks the human is expected to track.

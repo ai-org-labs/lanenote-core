@@ -14,20 +14,13 @@ When both exist, the textarea DSL wins. Copying the textarea to another browser 
 ```md
 ---
 lanenote:
-  profile.defaultLens: timeline
-  lenses.timeline.label: 時系列 × 担当
-  lenses.timeline.rows: scheduledAt
-  lenses.timeline.columns: assignee
-  lenses.reverse.label: 担当 × 日付
-  lenses.reverse.rows: assignee
-  lenses.reverse.columns: scheduledAt
-  lenses.productPhase.label: 製品 × 工程
-  lenses.productPhase.rows: product
-  lenses.productPhase.columns: phase
-  roles.PM.group: 推進
-  roles.開発.group: 開発系
-  roles.評価.aliases: QA
-  roles.評価.group: 品質系
+  default: timeline
+  view.timeline: 時系列 × 担当 | scheduledAt x assignee
+  view.reverse: 担当 × 日付 | assignee x scheduledAt
+  view.productPhase: 製品 × 工程 | product x phase
+  role.PM: @推進
+  role.開発: @開発系
+  role.評価: QA @品質系
   filters.status: All
   filters.assignee: All
   filters.dateRole: All
@@ -43,13 +36,15 @@ QA
 
 `lanenote:` keys are deliberately flat and copyable:
 
-- `profile.defaultLens` chooses the opening Lens.
+- `default` chooses the opening Lens.
+- `view.<id>: Label | rows x columns` defines a Lens in one line.
+- `role.<name>: alias1, alias2 @group` defines aliases and an optional group.
 - `lenses.<id>.label`, `lenses.<id>.rows`, and `lenses.<id>.columns` define a Lens.
 - `roles.<name>.aliases` defines comma-separated aliases.
 - `roles.<name>.group` assigns a role to a column group.
 - `filters.status`, `filters.assignee`, `filters.dateRole`, and `filters.query` define the opening filter state.
 
-The legacy `lens:`, `rows:`, `columns:`, `dateRole:`, `assignees:`, and `groups.<name>:` keys remain readable.
+The longer `profile.defaultLens`, `lenses.*`, and `roles.*` keys remain readable. The legacy `lens:`, `rows:`, `columns:`, `dateRole:`, `assignees:`, and `groups.<name>:` keys also remain readable.
 
 ## The Three Rules
 
@@ -184,10 +179,9 @@ Roles discovered in the note are usable immediately. Stable aliases and groups b
 ```md
 ---
 lanenote:
-  roles.開発.group: 開発系
-  roles.評価.aliases: QA
-  roles.評価.group: 品質系
-  roles.私.group: 個人
+  role.開発: @開発系
+  role.評価: QA @品質系
+  role.私: @個人
 ---
 ```
 
@@ -200,13 +194,9 @@ Lens definitions are written in the textarea DSL.
 ```md
 ---
 lanenote:
-  profile.defaultLens: productPhase
-  lenses.timeline.label: 時系列 × 担当
-  lenses.timeline.rows: scheduledAt
-  lenses.timeline.columns: assignee
-  lenses.productPhase.label: 製品 × 工程
-  lenses.productPhase.rows: product
-  lenses.productPhase.columns: phase
+  default: productPhase
+  view.timeline: 時系列 × 担当 | scheduledAt x assignee
+  view.productPhase: 製品 × 工程 | product x phase
 ---
 ```
 
@@ -270,6 +260,7 @@ Visible chips are reserved for:
 - candidate state for non-task action/event suggestions
 
 Routine provenance, such as `8/5` being normalized to `2026-08-05`, is kept in the card title tooltip and the small evidence line instead of becoming another chip.
+Source decision details are hidden until hover or keyboard focus, so the normal view stays scan-friendly while still preserving explainability.
 
 ## View Templates
 
@@ -278,10 +269,9 @@ Templates are ordinary complete LaneNote source text linked to a Lens. The built
 ```md
 ---
 lanenote:
-  profile.defaultLens: timeline
-  lenses.timeline.rows: scheduledAt
-  lenses.timeline.columns: assignee
-  roles.開発.group: 開発系
+  default: timeline
+  view.timeline: 時系列 × 担当 | scheduledAt x assignee
+  role.開発: @開発系
 ---
 
 8/5

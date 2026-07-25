@@ -274,11 +274,37 @@
     var profile = { roles: {}, lenses: {}, templates: {} };
     Object.keys(source).forEach(function (key) {
       var value = source[key];
+      var roleShortcut = key.match(/^role\.([^.]+)$/);
+      if (roleShortcut) {
+        var shortcutRoleName = roleShortcut[1];
+        var groupMatch = String(value || "").match(/(?:^|\s)@([^\s,]+)\s*$/);
+        var aliasesValue = groupMatch ? String(value).replace(groupMatch[0], "").trim() : value;
+        profile.roles[shortcutRoleName] = profile.roles[shortcutRoleName] || {};
+        var aliases = splitList(aliasesValue);
+        if (aliases.length) profile.roles[shortcutRoleName].aliases = aliases;
+        if (groupMatch) profile.roles[shortcutRoleName].group = groupMatch[1];
+        return;
+      }
       var roleMatch = key.match(/^roles\.([^.]+)\.(group|aliases)$/);
       if (roleMatch) {
         var roleName = roleMatch[1];
         profile.roles[roleName] = profile.roles[roleName] || {};
         profile.roles[roleName][roleMatch[2]] = roleMatch[2] === "aliases" ? splitList(value) : value;
+        return;
+      }
+      var viewShortcut = key.match(/^(?:view|lens)\.([^.]+)$/);
+      if (viewShortcut) {
+        var shortcutLensName = viewShortcut[1];
+        var parts = String(value || "").split("|").map(function (part) { return part.trim(); });
+        var axisText = parts.length > 1 ? parts.pop() : parts[0];
+        var label = parts.join(" | ");
+        var axisMatch = axisText.match(/^([A-Za-z0-9_]+)\s*(?:x|×|->|→|\/)\s*([A-Za-z0-9_]+)$/);
+        profile.lenses[shortcutLensName] = profile.lenses[shortcutLensName] || {};
+        if (label) profile.lenses[shortcutLensName].label = label;
+        if (axisMatch) {
+          profile.lenses[shortcutLensName].rows = axisMatch[1];
+          profile.lenses[shortcutLensName].columns = axisMatch[2];
+        }
         return;
       }
       var lensMatch = key.match(/^lenses\.([^.]+)\.(label|rows|columns)$/);
@@ -288,7 +314,7 @@
         profile.lenses[lensName][lensMatch[2]] = value;
         return;
       }
-      if (key === "profile.defaultLens" || key === "defaultLens" || key === "lens") {
+      if (key === "profile.defaultLens" || key === "defaultLens" || key === "default" || key === "lens") {
         profile.defaultLens = value;
       }
     });
@@ -1067,10 +1093,17 @@
       '<span class="ln-card-title">' + escapeHTML(item.title) + '</span>',
       '</span>',
       tags ? '<span class="ln-tags">' + tags + '</span>' : "",
-      '<span class="ln-evidence">line ' + item.anchor.line + ' · ' + escapeHTML(item.status || item.kind) + '</span>',
+      '<span class="ln-evidence">' + escapeHTML(cardStateLabel(item)) + ' · line ' + item.anchor.line + '</span>',
       '<span class="ln-decision">' + escapeHTML(decisionLine(item)) + '</span>',
       '</button>'
     ].join("");
+  }
+
+  function cardStateLabel(item) {
+    if (item.status) return item.status;
+    if (item.kind === "action-candidate") return "候補";
+    if (item.kind === "event-candidate") return "予定";
+    return "メモ";
   }
 
   function decisionLine(item) {
@@ -1106,21 +1139,22 @@
       ".ln-matrix thead th{position:sticky;top:0;z-index:3}",
       ".ln-date{position:sticky;left:0;z-index:2}",
       ".ln-corner{z-index:4}",
-      ".ln-cell{min-width:180px;height:86px;background:#fff;border:1px solid #d9ded6;border-right:0;border-bottom:0;padding:7px;box-sizing:border-box;vertical-align:top}",
-      ".ln-card{display:block;width:100%;text-align:left;border:1px solid #ccd5c8;border-radius:7px;background:#fbfcfa;color:#172026;padding:8px;margin:0 0 6px;cursor:pointer;box-shadow:0 1px 0 rgba(20,30,20,.04)}",
+      ".ln-cell{min-width:190px;height:76px;background:#fff;border:1px solid #d9ded6;border-right:0;border-bottom:0;padding:8px;box-sizing:border-box;vertical-align:top}",
+      ".ln-card{display:block;width:100%;text-align:left;border:1px solid #ccd5c8;border-radius:6px;background:#fbfcfa;color:#172026;padding:8px 9px;margin:0 0 7px;cursor:pointer;box-shadow:0 1px 0 rgba(20,30,20,.04)}",
       ".ln-card:focus{outline:2px solid #427c6d;outline-offset:1px}",
       ".ln-card-top{display:flex;gap:7px;align-items:flex-start}",
-      ".ln-card-title{font-weight:600;overflow-wrap:anywhere}",
+      ".ln-card-title{font-weight:650;line-height:1.35;overflow-wrap:anywhere}",
       ".ln-card-check{margin-top:2px;accent-color:#427c6d}",
       ".ln-dot{width:7px;height:7px;border-radius:99px;background:#8b977f;margin-top:7px;flex:0 0 auto}",
       ".ln-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}",
-      ".ln-tag{font-size:11px;border:1px solid #d4c9a8;background:#fff8dc;color:#4b4024;border-radius:999px;padding:1px 6px}",
+      ".ln-tag{font-size:11px;border:1px solid #d4c9a8;background:#fff8dc;color:#4b4024;border-radius:999px;padding:1px 6px;line-height:1.45}",
       ".ln-tag-date{border-color:#b8c5d6;background:#edf5ff;color:#234563}",
       ".ln-tag-due{border-color:#c6b6d4;background:#f7f0ff;color:#4d3261}",
       ".ln-tag-candidate{border-color:#b7c8bf;background:#eff8f2;color:#284d39}",
       ".ln-tag-alert{border-color:#d8a7a0;background:#fff0ed;color:#7f251d;font-weight:700}",
-      ".ln-evidence{display:block;margin-top:5px;color:#627065;font-size:11px}",
-      ".ln-decision{display:block;margin-top:3px;color:#526258;font-size:11px}",
+      ".ln-evidence{display:block;margin-top:5px;color:#6a756c;font-size:11px;line-height:1.35}",
+      ".ln-decision{display:block;max-height:0;overflow:hidden;margin-top:0;color:#526258;font-size:11px;line-height:1.35;opacity:0;transition:max-height .12s ease,opacity .12s ease,margin-top .12s ease}",
+      ".ln-card:hover .ln-decision,.ln-card:focus .ln-decision{max-height:44px;margin-top:3px;opacity:1}",
       ".ln-card.is-past-open{border-color:#d8a7a0;background:#fff9f7}",
       ".ln-empty{caption-side:bottom;text-align:left;padding:24px;color:#627065}",
       ".ln-context{border-top:1px solid #d9ded6;background:#fff;padding:10px 12px;color:#415047;min-height:20px}",
@@ -1133,23 +1167,16 @@
     return [
       "---",
       "lanenote:",
-      "  profile.defaultLens: " + (defaultLens || "timeline"),
-      "  lenses.timeline.label: 時系列 × 担当",
-      "  lenses.timeline.rows: scheduledAt",
-      "  lenses.timeline.columns: assignee",
-      "  lenses.reverse.label: 担当 × 日付",
-      "  lenses.reverse.rows: assignee",
-      "  lenses.reverse.columns: scheduledAt",
-      "  lenses.productPhase.label: 製品 × 工程",
-      "  lenses.productPhase.rows: product",
-      "  lenses.productPhase.columns: phase",
-      "  roles.PM.group: 推進",
-      "  roles.企画.group: 推進",
-      "  roles.開発.group: 開発系",
-      "  roles.インフラ.group: 開発系",
-      "  roles.評価.aliases: QA",
-      "  roles.評価.group: 品質系",
-      "  roles.私.group: 個人",
+      "  default: " + (defaultLens || "timeline"),
+      "  view.timeline: 時系列 × 担当 | scheduledAt x assignee",
+      "  view.reverse: 担当 × 日付 | assignee x scheduledAt",
+      "  view.productPhase: 製品 × 工程 | product x phase",
+      "  role.PM: @推進",
+      "  role.企画: @推進",
+      "  role.開発: @開発系",
+      "  role.インフラ: @開発系",
+      "  role.評価: QA @品質系",
+      "  role.私: @個人",
       "  filters.status: All",
       "  filters.assignee: All",
       "  filters.dateRole: All",

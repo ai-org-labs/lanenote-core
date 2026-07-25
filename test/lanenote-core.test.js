@@ -28,8 +28,8 @@ assert.equal(templates.releaseTimeline.lens, "timeline");
 assert.equal(templates.assigneeWbs.lens, "reverse");
 assert.equal(templates.productPhase.lens, "productPhase");
 assert.match(templates.releaseTimeline.source, /Product A v2\.4 リリース計画/);
-assert.match(templates.releaseTimeline.source, /lenses\.timeline\.rows: scheduledAt/);
-assert.match(templates.releaseTimeline.source, /roles\.評価\.aliases: QA/);
+assert.match(templates.releaseTimeline.source, /view\.timeline: 時系列 × 担当 \| scheduledAt x assignee/);
+assert.match(templates.releaseTimeline.source, /role\.評価: QA @品質系/);
 assert.match(templates.assigneeWbs.source, /担当別WBS/);
 assert.match(templates.productPhase.source, /Product B/);
 
@@ -234,6 +234,24 @@ const sourceOnlyDslTarget = { innerHTML: "" };
 LaneNoteCore.renderMatrix(sourceOnlyDslModel, sourceOnlyDslTarget, { filters: { status: "All" } });
 assert.match(sourceOnlyDslTarget.innerHTML, />製品<\/th>/);
 assert.match(sourceOnlyDslTarget.innerHTML, /ProductA/);
+
+const conciseDslModel = normalize(LaneNoteCore.parse([
+  "---",
+  "lanenote:",
+  "  default: productPhase",
+  "  view.timeline: 時系列 × 担当 | scheduledAt x assignee",
+  "  view.productPhase: 製品 × 工程 | product x phase",
+  "  role.評価: QA @品質系",
+  "---",
+  "7/20",
+  "QA - [ ] product:ProductA phase:試験 結合確認"
+].join("\n"), { baseDate: "2026-07-19" }));
+assert.equal(conciseDslModel.profile.defaultLens, "productPhase");
+assert.equal(conciseDslModel.profile.lenses.productPhase.label, "製品 × 工程");
+assert.equal(conciseDslModel.profile.lenses.productPhase.rows, "product");
+assert.equal(conciseDslModel.profile.lenses.productPhase.columns, "phase");
+assert.equal(conciseDslModel.items[0].assignee, "評価");
+assert.equal(conciseDslModel.items[0].group, "品質系");
 
 const filterDslModel = normalize(LaneNoteCore.parse([
   "---",
