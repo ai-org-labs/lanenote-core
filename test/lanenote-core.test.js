@@ -335,4 +335,18 @@ assert.match(checked.split("\n")[3], /\[x\]/);
 const unchecked = LaneNoteCore.replaceCheckboxAtLine(checked, 3, false);
 assert.match(unchecked.split("\n")[3], /\[ \]/);
 
+const standalonePath = path.join(__dirname, "..", "examples", "standalone.html");
+const standaloneHtml = fs.readFileSync(standalonePath, "utf8");
+assert.match(standaloneHtml, /LaneNote Standalone/);
+assert.match(standaloneHtml, /完全ローカル保存/);
+assert.match(standaloneHtml, /lanenote-standalone:latest:v1/);
+assert.match(standaloneHtml, /lanenote-standalone:backups:v1/);
+assert.match(standaloneHtml, /lanenote-standalone:runtime:v1/);
+assert.match(standaloneHtml, /maxBackups = 10/);
+assert.match(standaloneHtml, /LaneNoteCore\.create/);
+assert.doesNotMatch(standaloneHtml, /<script[^>]+src=/i);
+assert.doesNotMatch(standaloneHtml, /\bfetch\s*\(/);
+assert.doesNotMatch(standaloneHtml, /\bXMLHttpRequest\b/);
+assert.doesNotMatch(standaloneHtml, /\bsendBeacon\b/);
+
 console.log("LaneNoteCore v0.2 tests passed");

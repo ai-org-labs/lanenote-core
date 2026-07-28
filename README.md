@@ -34,6 +34,24 @@ GitHub Pages can publish the browser-local demo from this repository. The root p
 
 For local development, open [examples/browser-local.html](/Users/mn/development/LaneNote/examples/browser-local.html) in a browser.
 
+## Standalone Local Tool
+
+Open [examples/standalone.html](/Users/mn/development/LaneNote/examples/standalone.html) directly after downloading the repository or npm package. It is a single-file web tool with the LaneNote runtime inlined, so it can run from `file://` without a dev server, CDN, or upload endpoint.
+
+The standalone tool stores data only in the browser's `localStorage`:
+
+- Latest state is saved continuously under `lanenote-standalone:latest:v1` and restored on startup.
+- Manual backup is saved when the user clicks `バックアップ保存`.
+- Automatic backup runs on a periodic change check when the current source differs enough from the last backup.
+- Backup history keeps the latest 10 generations under `lanenote-standalone:backups:v1`.
+- `復元` replaces the editor with a selected backup while keeping the pre-restore content as the latest saved state.
+
+To regenerate the standalone file after changing `dist/lanenote-core.js`, run:
+
+```sh
+npm run standalone
+```
+
 ## Syntax
 
 The implemented MVP syntax is documented in [docs/SYNTAX.md](/Users/mn/development/LaneNote/docs/SYNTAX.md).
